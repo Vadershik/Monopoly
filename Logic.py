@@ -1,18 +1,20 @@
+from settings import MINPLAYERS, MAXPLAYERS, MINDICE, MAXDICE, BOARDSIZE
+from Parser import Parser
+
 import logging
+import random
 import sys
-MINPlayers = 2
-MAXPlayers = 8
-players = 2
+
 
 class Game:
-    board = [[] for _ in range(12)]
+    board = [[] for _ in range(BOARDSIZE)]
+    ownersBoard = [0 for _ in range(BOARDSIZE)] #For rewarding new cards
 
-    def __init__(self, board):
-        self.board = board
-        logging.basicConfig(filename='log.txt',level=logging.WARNING,
+    def __init__(self):
+        logging.basicConfig(filename='log.txt',level=logging.INFO,
                             format='%(asctime)s:%(levelname)s:%(message)s')
 
-    def makeBoard(self, playersCount: int):
+    def setPlayersOnBoard(self, playersCount: int):
         for i in range(playersCount):
             self.board[0].append(i+1)
         logging.info("Maked a board")
@@ -25,25 +27,42 @@ class Game:
 
     def movePlayer(self, numPlayer: int, startIndex: int, endIndex: int):
         """Function to move a player in board."""
-        assert MINPlayers <= numPlayer <= MAXPlayers
+        assert MINPLAYERS <= numPlayer <= MAXPLAYERS
         assert 0 <= startIndex <= 11
         assert 0 <= endIndex <= 11
         self.board[startIndex].remove(numPlayer)
-        self.board[endIndex].append(endIndex)
+        self.board[endIndex].append(numPlayer)
         logging.info(f"{numPlayer} moved from {startIndex+1} to {endIndex+1}")
+
     def getTask(self, numPlayer: int):
-        pass
+        parser = Parser()
+        logging.info(f"{numPlayer} get task")
+        return parser.getTask()
 
     def getPosPlayer(self, numPlayer: int):
-        pass
+        """Function to get position of a player."""
+        for i in range(len(self.board)):
+            if numPlayer in self.board[i]:
+                return i
+        return False
 
-    def getNewPosPlayer(self, currentIndex: int):
+    def getNewPosPlayer(self, currentIndex: int) -> int:
         """Function to make a roll dice."""
         #Formula: (currentIndex+random(1,6))%12
-        pass
+        #CurrentIndex start from 0 to 11
+        newPos = ((currentIndex)+random.randint(MINDICE, MAXDICE))%12
+        assert self.checkPosPlayer(newPos)
+        return newPos
 
-    def checkPosPlayer(self, Pos) -> bool:
-        return MINPlayers <= Pos <= MAXPlayers
+    def checkPosPlayer(self, position) -> bool:
+        return 0 <= position <= 11
+
+    def getOwnerOfPos(self, position) -> int:
+        return self.ownersBoard[position]
+    
+    def setNewOwnerOfPos(self, numPlayer: int, position : int):
+        self.ownersBoard[position] = numPlayer
+
 
 def startMenu():
     """This function need for emulation of game."""
@@ -53,11 +72,12 @@ def startMenu():
     except:
         print("INPUTERROR: Players need to be integer value")
         sys.exit(0)
-    assert MINPlayers <= players <= MAXPlayers
-    board = [[] for i in range(12)]
+    assert MINPLAYERS <= players <= MAXPLAYERS
+    board = [[] for _ in range(BOARDSIZE)]
     a = Game(board)
     a.getBoard()
-    a.makeBoard(players)
+    a.setPlayersOnBoard(players)
+    a.movePlayer(2, 0, a.getNewPosPlayer(a.getPosPlayer(2)))
     a.getBoard()
 
 
