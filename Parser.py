@@ -19,6 +19,6 @@ class Parser:
                 self.tasks = file.readlines()
         return self.tasks
 
-    def getTask(self):
-        return random.choice(self.tasks)
+    def getTask(self) -> str:
+        return "ЗАДАНИЕ: "+random.choice(self.tasks)+f" x{random.randint(3,10)}"
 

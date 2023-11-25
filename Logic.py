@@ -10,10 +10,14 @@ import sys
 class Game:
     board = [[] for _ in range(BOARDSIZE)]
     ownersBoard = [0 for _ in range(BOARDSIZE)] #For rewarding new cards
+    playersInGame = []
 
-    def __init__(self):
+    def __init__(self, players):
         logging.basicConfig(filename='log.txt',level=logging.INFO,
                             format='%(asctime)s:%(levelname)s:%(message)s')
+        self.players = players
+        self.playersInGame = [i+1 for i in range(players)]
+        self.setPlayersOnBoard(players) #Распологаем игроков на новой позиции
 
     def setPlayersOnBoard(self, playersCount: int):
         for i in range(playersCount):
@@ -23,8 +27,7 @@ class Game:
     def getBoard(self):
         """Print a game board."""
         
-        for i in range(len(self.board)):
-            print(self.board[i])
+        print(*self.board)
         logging.info("Maked a request to show board.")
 
     def movePlayer(self, numPlayer: int, startIndex: int, endIndex: int):
@@ -46,7 +49,14 @@ class Game:
             logging.info(f"{numPlayer} get in place of a {self.getOwnerOfPos(endIndex)} player.")
             self.getTask(numPlayer)
 
-
+    def completeTask(self) -> bool:
+        """Function to check task be completed"""
+        trust = ['1',"yes","ye",'y','д']
+        #falsed = ['0',"no",'n','н']
+        print("You will be make a task?(Y/N)")
+        ans = input().lower()
+        return ans in trust
+    
     def getTask(self, numPlayer: int):
         """Function to give a random task from tasks.txt"""
 
@@ -55,6 +65,10 @@ class Game:
 
         task = parser.getTask()
         print(task)
+        if not self.completeTask():
+            print("YOU LOSE")
+            self.removePlayer(numPlayer)
+            print(f"{numPlayer} lose.")
         
         return parser.getTask()
 
@@ -89,8 +103,12 @@ class Game:
 
     def removePlayer(self, numPlayer: int, killer: Union[int, None] = None):
         #removing from board
-        position = self.checkPosPlayer(numPlayer)
+        position = self.getPosPlayer(numPlayer)
         self.board[position].remove(numPlayer)
+        self.playersInGame.remove(numPlayer)
+        if len(self.playersInGame)==1:
+            print(f"PLAYER {self.playersInGame[0]} WON!")
+            sys.exit(0)
 
         if killer!=None:
             for i in range(len(self.ownersBoard)):
@@ -110,15 +128,32 @@ def startMenu():
         print("INPUTERROR: Players need to be integer value")
         sys.exit(0)
     assert MINPLAYERS <= players <= MAXPLAYERS
-    a = Game()
-    a.getBoard()
-    a.setPlayersOnBoard(players)
-    a.movePlayer(2, 0, a.getNewPosPlayer(a.getPosPlayer(2)))
-    a.setNewOwnerOfPos(2, a.getPosPlayer(2))
-    a.movePlayer(1, 0, a.getPosPlayer(2))
-    print()
-    print(a.getOwnerOfPos(a.getPosPlayer(1)))
-    a.getBoard()
+    a = Game(players)
+    index = 0
+    while True:
+        print("What are you want?\n1 - Make roll\n2 - Remove Player\n3 - Show Board\n0 - exit")
+        print("Lived players: ", *a.playersInGame)
+        print(f"Player {a.playersInGame[index]} move:")
+        ans = int(input())
+        numPlayer = a.playersInGame[index]
+        posPlayer = a.getPosPlayer(numPlayer)
+        match ans:
+            case 1:
+                newPos = a.getNewPosPlayer(posPlayer)
+                a.movePlayer(numPlayer,posPlayer,newPos)
+                index+=1
+            case 2:
+                print("Type num of player:")
+                numPlayer = int(input())
+                a.removePlayer(numPlayer)
+                if numPlayer not in a.playersInGame:
+                    print("This player not in game!")
+            case 3:
+                a.getBoard()
+            case 0:
+                break
+        if index>=len(a.playersInGame):
+            index-=len(a.playersInGame)
 
 
 if __name__ == "__main__":
