@@ -1,6 +1,7 @@
 from settings import MINPLAYERS, MAXPLAYERS, MINDICE, MAXDICE, BOARDSIZE
 from Parser import Parser
 from typing import Optional, Union
+from tkinter import messagebox
 
 import logging
 import random
@@ -24,18 +25,23 @@ class Game:
             self.board[0].append(i+1)
         logging.info("Maked a board")
 
+    def getOwnersBoard(self):
+        return self.ownersBoard
+    def getPlayersInGame(self):
+        return self.playersInGame
     def getBoard(self):
         """Print a game board."""
         
-        print(*self.board)
+        if __name__ == "__main__":
+            print(*self.board)
         logging.info("Maked a request to show board.")
-
+        return self.board
     def movePlayer(self, numPlayer: int, startIndex: int, endIndex: int):
         """Function to move a player in board."""
         
         assert MINPLAYERS-1 <= numPlayer <= MAXPLAYERS
-        assert 0 <= startIndex <= 11
-        assert 0 <= endIndex <= 11
+        assert 0 <= startIndex <= BOARDSIZE-1
+        assert 0 <= endIndex <= BOARDSIZE-1
         
         self.board[startIndex].remove(numPlayer)
         self.board[endIndex].append(numPlayer)
@@ -49,13 +55,13 @@ class Game:
             logging.info(f"{numPlayer} get in place of a {self.getOwnerOfPos(endIndex)} player.")
             self.getTask(numPlayer)
 
-    def completeTask(self) -> bool:
+    def completeTask(self, status: str) -> bool:
         """Function to check task be completed"""
         trust = ['1',"yes","ye",'y','д']
         #falsed = ['0',"no",'n','н']
-        print("You will be make a task?(Y/N)")
-        ans = input().lower()
-        return ans in trust
+#        print("You will be make a task?(Y/N)")
+#        ans = input().lower()
+        return status in trust
     
     def getTask(self, numPlayer: int):
         """Function to give a random task from tasks.txt"""
@@ -64,11 +70,15 @@ class Game:
         logging.info(f"{numPlayer} get task")
 
         task = parser.getTask()
-        print(task)
-        if not self.completeTask():
-            print("YOU LOSE")
-            self.removePlayer(numPlayer)
-            print(f"{numPlayer} lose.")
+        if __name__ == "__main__":
+            print(task)
+        else:
+            messagebox.showinfo(title="{numPlayer} get task!",
+                                message=task)
+#        if not self.completeTask():
+#            print("YOU LOSE")
+#            self.removePlayer(numPlayer)
+#            print(f"{numPlayer} lose.")
         
         return parser.getTask()
 
@@ -86,14 +96,14 @@ class Game:
         #Formula: (currentIndex+random(1,6))%12
         #CurrentIndex start from 0 to 11
         
-        newPos = ((currentIndex)+random.randint(MINDICE, MAXDICE))%12
+        newPos = ((currentIndex)+random.randint(MINDICE, MAXDICE))%BOARDSIZE
         
         assert self.checkPosPlayer(newPos)
         
         return newPos
 
     def checkPosPlayer(self, position: int) -> bool:
-        return 0 <= position <= 11
+        return 0 <= position <= BOARDSIZE-1
 
     def getOwnerOfPos(self, position: int) -> int:
         return self.ownersBoard[position]
@@ -107,8 +117,9 @@ class Game:
         self.board[position].remove(numPlayer)
         self.playersInGame.remove(numPlayer)
         if len(self.playersInGame)==1:
-            print(f"PLAYER {self.playersInGame[0]} WON!")
-            sys.exit(0)
+#            print(f"PLAYER {self.playersInGame[0]} WON!")
+#            sys.exit(0)
+            return f"PLAYER {self.playersInGame[0]} WON!"
 
         if killer!=None:
             for i in range(len(self.ownersBoard)):
